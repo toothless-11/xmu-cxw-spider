@@ -1,0 +1,36 @@
+name: Monitor
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */12 * * *'
+
+jobs:
+  run-monitor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Libs
+        run: pip install requests beautifulsoup4
+
+      - name: Run
+        env:
+          MAIL_USER: ${{ secrets.MAIL_USER }}
+          MAIL_PASS: ${{ secrets.MAIL_PASS }}
+          MAIL_RECIPIENTS: ${{ secrets.MAIL_RECIPIENTS }}  # <--- 必须添加这一行
+          PYTHONUNBUFFERED: 1
+        run: python monitor.py
+
+      - name: Auto Save State
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Save state"
+          file_pattern: "notified_ids.txt"
